@@ -1,12 +1,17 @@
 // Important classes for the program
+const fs = require('node:fs');
 const { Client, Intents } = require('discord.js');
-const { token } = require('./config.json');
 
 const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
 
-client.once('ready', () => {
-	console.log('Ready');
-});
+const eventFiles = fs.readdirSync('./events').filter(file => file.endsWith('.js'));
 
-
-client.login(token);
+for (const file of eventFiles) {
+	const event = require(`./events/${file}`);
+	if (event.once) {
+		client.once(event.name, (...args) => event.execute(...args));
+	}
+	else {
+		client.on(event.name, (...args) => event.execute(...args));
+	}
+}
